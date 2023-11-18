@@ -487,6 +487,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bytes",
  "ctor",
  "derive_builder",
  "reqwest",

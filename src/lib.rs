@@ -4,6 +4,7 @@ pub use api::*;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use bytes::Bytes;
 use reqwest::{Client, RequestBuilder, Response};
 use schemars::{schema_for, JsonSchema};
 use std::time::Duration;
@@ -49,6 +50,12 @@ impl LlmSdk {
         let req = self.prepare_request(req);
         let res = req.send_and_log().await?;
         Ok(res.json::<CreateImageResponse>().await?)
+    }
+
+    pub async fn speech(&self, req: SpeechRequest) -> Result<Bytes> {
+        let req = self.prepare_request(req);
+        let res = req.send_and_log().await?;
+        Ok(res.bytes().await?)
     }
 
     fn prepare_request(&self, req: impl IntoRequest) -> RequestBuilder {
