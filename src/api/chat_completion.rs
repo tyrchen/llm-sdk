@@ -1,4 +1,4 @@
-use crate::IntoRequest;
+use crate::{IntoRequest, ToSchema};
 use derive_builder::Builder;
 use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -162,7 +162,8 @@ pub struct UserMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssistantMessage {
     /// The contents of the system message.
-    content: String,
+    #[serde(default)]
+    content: Option<String>,
     /// An optional name for the participant. Provides the model information to differentiate between participants of the same role.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     name: Option<String>,
@@ -284,11 +285,74 @@ impl ChatCompletionMessage {
     }
 }
 
+impl Tool {
+    pub fn new_function<T: ToSchema>(
+        name: impl Into<String>,
+        description: impl Into<String>,
+    ) -> Self {
+        let parameters = T::to_schema();
+        Self {
+            r#type: ToolType::Function,
+            function: FunctionInfo {
+                name: name.into(),
+                description: description.into(),
+                parameters,
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::LlmSdk;
+    use crate::{LlmSdk, ToSchema};
     use anyhow::Result;
+    use schemars::JsonSchema;
+
+    #[allow(dead_code)]
+    #[derive(Debug, Clone, Deserialize, JsonSchema)]
+    struct GetWeatherArgs {
+        /// The city to get the weather for.
+        city: String,
+        /// the unit
+        unit: TemperatureUnit,
+    }
+
+    #[allow(dead_code)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, JsonSchema)]
+    enum TemperatureUnit {
+        /// Celsius
+        #[default]
+        Celsius,
+        /// Fahrenheit
+        Fahrenheit,
+    }
+
+    #[derive(Debug, Clone)]
+    struct GetWeatherResponse {
+        temperature: f32,
+        unit: TemperatureUnit,
+    }
+
+    #[allow(dead_code)]
+    #[derive(Debug, Deserialize, JsonSchema)]
+    struct ExplainMoodArgs {
+        /// The mood to explain.
+        name: String,
+    }
+
+    fn get_weather_forecast(args: GetWeatherArgs) -> GetWeatherResponse {
+        match args.unit {
+            TemperatureUnit::Celsius => GetWeatherResponse {
+                temperature: 22.2,
+                unit: TemperatureUnit::Celsius,
+            },
+            TemperatureUnit::Fahrenheit => GetWeatherResponse {
+                temperature: 72.0,
+                unit: TemperatureUnit::Fahrenheit,
+            },
+        }
+    }
 
     #[test]
     #[ignore]
@@ -337,6 +401,44 @@ mod tests {
         );
     }
 
+    #[test]
+    fn chat_completion_request_with_tools_serialize_should_work() {
+        let req = get_tool_completion_request();
+        let json = serde_json::to_value(req).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({
+              "model": "gpt-3.5-turbo-1106",
+              "messages": [{
+                "role": "system",
+                "content": "I can choose the right function for you."
+              }, {
+                "role": "user",
+                "content": "What is the weather like in Boston?",
+                "name": "user1"
+              }],
+              "tools": [
+                {
+                  "type": "function",
+                  "function": {
+                    "description": "Get the weather forecast for a city.",
+                    "name": "get_weather_forecast",
+                    "parameters": GetWeatherArgs::to_schema()
+                  }
+                },
+                {
+                  "type": "function",
+                  "function": {
+                    "description": "Explain the meaning of the given mood.",
+                    "name": "explain_mood",
+                    "parameters": ExplainMoodArgs::to_schema()
+                  }
+                }
+              ]
+            })
+        );
+    }
+
     #[tokio::test]
     async fn simple_chat_completion_should_work() -> Result<()> {
         let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
@@ -352,6 +454,27 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn chat_completion_with_tools_should_work() -> Result<()> {
+        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
+        let req = get_tool_completion_request();
+        let res = sdk.chat_completion(req).await?;
+        assert_eq!(res.model, ChatCompleteModel::Gpt3Turbo);
+        assert_eq!(res.object, "chat.completion");
+        assert_eq!(res.choices.len(), 1);
+        let choice = &res.choices[0];
+        assert_eq!(choice.finish_reason, FinishReason::ToolCalls);
+        assert_eq!(choice.index, 0);
+        assert_eq!(choice.message.content, None);
+        assert_eq!(choice.message.tool_calls.len(), 1);
+        let tool_call = &choice.message.tool_calls[0];
+        assert_eq!(tool_call.function.name, "get_weather_forecast");
+        let ret = get_weather_forecast(serde_json::from_str(&tool_call.function.arguments)?);
+        assert_eq!(ret.unit, TemperatureUnit::Celsius);
+        assert_eq!(ret.temperature, 22.2);
+        Ok(())
+    }
+
     fn get_simple_completion_request() -> ChatCompletionRequest {
         let messages = vec![
             ChatCompletionMessage::new_system("I can answer any question you ask me.", ""),
@@ -359,6 +482,28 @@ mod tests {
         ];
         ChatCompletionRequestBuilder::default()
             .messages(messages)
+            .build()
+            .unwrap()
+    }
+
+    fn get_tool_completion_request() -> ChatCompletionRequest {
+        let messages = vec![
+            ChatCompletionMessage::new_system("I can choose the right function for you.", ""),
+            ChatCompletionMessage::new_user("What is the weather like in Boston?", "user1"),
+        ];
+        let tools = vec![
+            Tool::new_function::<GetWeatherArgs>(
+                "get_weather_forecast",
+                "Get the weather forecast for a city.",
+            ),
+            Tool::new_function::<ExplainMoodArgs>(
+                "explain_mood",
+                "Explain the meaning of the given mood.",
+            ),
+        ];
+        ChatCompletionRequestBuilder::default()
+            .messages(messages)
+            .tools(tools)
             .build()
             .unwrap()
     }

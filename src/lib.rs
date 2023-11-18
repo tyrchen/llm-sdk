@@ -5,6 +5,7 @@ pub use api::*;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use reqwest::{Client, RequestBuilder, Response};
+use schemars::{schema_for, JsonSchema};
 use std::time::Duration;
 use tracing::error;
 
@@ -18,6 +19,13 @@ pub struct LlmSdk {
 
 pub trait IntoRequest {
     fn into_request(self, client: Client) -> RequestBuilder;
+}
+
+/// For tool function. If you have a function that you want ChatGPT to call, you shall put
+/// all params into a struct and derive schemars::JsonSchema for it. Then you can use
+/// `YourStruct::to_schema()` to generate json schema for tools.
+pub trait ToSchema: JsonSchema {
+    fn to_schema() -> serde_json::Value;
 }
 
 impl LlmSdk {
@@ -73,6 +81,11 @@ impl SendAndLog for RequestBuilder {
     }
 }
 
+impl<T: JsonSchema> ToSchema for T {
+    fn to_schema() -> serde_json::Value {
+        serde_json::to_value(schema_for!(Self)).unwrap()
+    }
+}
 #[cfg(test)]
 #[ctor::ctor]
 fn init() {
