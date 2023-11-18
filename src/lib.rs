@@ -58,15 +58,15 @@ impl LlmSdk {
         Ok(res.bytes().await?)
     }
 
-    pub async fn transcription(&self, req: TranscriptionRequest) -> Result<TranscriptionResponse> {
-        let is_json = req.response_format == TranscriptionResponseFormat::Json;
+    pub async fn whisper(&self, req: WhisperRequest) -> Result<WhisperResponse> {
+        let is_json = req.response_format == WhisperResponseFormat::Json;
         let req = self.prepare_request(req);
         let res = req.send_and_log().await?;
         let ret = if is_json {
-            res.json::<TranscriptionResponse>().await?
+            res.json::<WhisperResponse>().await?
         } else {
             let text = res.text().await?;
-            TranscriptionResponse { text }
+            WhisperResponse { text }
         };
         Ok(ret)
     }
