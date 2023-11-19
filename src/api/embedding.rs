@@ -69,10 +69,9 @@ pub struct EmbeddingData {
 }
 
 impl IntoRequest for EmbeddingRequest {
-    fn into_request(self, client: Client) -> RequestBuilder {
-        client
-            .post("https://api.openai.com/v1/embeddings")
-            .json(&self)
+    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+        let url = format!("{}/embeddings", base_url);
+        client.post(url).json(&self)
     }
 }
 
@@ -118,16 +117,14 @@ impl From<&str> for EmbeddingInput {
 
 #[cfg(test)]
 mod tests {
-    use crate::LlmSdk;
-
     use super::*;
+    use crate::SDK;
     use anyhow::Result;
 
     #[tokio::test]
     async fn string_embedding_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let req = EmbeddingRequest::new("The quick brown fox jumped over the lazy dog.");
-        let res = sdk.embedding(req).await?;
+        let res = SDK.embedding(req).await?;
         assert_eq!(res.data.len(), 1);
         assert_eq!(res.object, "list");
         // response model id is different
@@ -141,12 +138,11 @@ mod tests {
 
     #[tokio::test]
     async fn array_string_embedding_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let req = EmbeddingRequest::new_array(vec![
             "The quick brown fox jumped over the lazy dog.".into(),
             "我是谁？宇宙有没有尽头？".into(),
         ]);
-        let res = sdk.embedding(req).await?;
+        let res = SDK.embedding(req).await?;
         assert_eq!(res.data.len(), 2);
         assert_eq!(res.object, "list");
         // response model id is different

@@ -97,10 +97,9 @@ pub struct ImageObject {
 }
 
 impl IntoRequest for CreateImageRequest {
-    fn into_request(self, client: Client) -> RequestBuilder {
-        client
-            .post("https://api.openai.com/v1/images/generations")
-            .json(&self)
+    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+        let url = format!("{}/images/generations", base_url);
+        client.post(url).json(&self)
     }
 }
 
@@ -115,13 +114,11 @@ impl CreateImageRequest {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use crate::LlmSdk;
-
     use super::*;
+    use crate::SDK;
     use anyhow::Result;
     use serde_json::json;
+    use std::fs;
 
     #[test]
     fn create_image_request_should_serialize() -> Result<()> {
@@ -159,9 +156,8 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn create_image_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let req = CreateImageRequest::new("draw a cute caterpillar");
-        let res = sdk.create_image(req).await?;
+        let res = SDK.create_image(req).await?;
         assert_eq!(res.data.len(), 1);
         let image = &res.data[0];
         assert!(image.url.is_some());

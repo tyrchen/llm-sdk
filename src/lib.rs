@@ -14,12 +14,13 @@ const TIMEOUT: u64 = 30;
 
 #[derive(Debug, Clone)]
 pub struct LlmSdk {
+    pub(crate) base_url: String,
     pub(crate) token: String,
     pub(crate) client: Client,
 }
 
 pub trait IntoRequest {
-    fn into_request(self, client: Client) -> RequestBuilder;
+    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder;
 }
 
 /// For tool function. If you have a function that you want ChatGPT to call, you shall put
@@ -30,9 +31,10 @@ pub trait ToSchema: JsonSchema {
 }
 
 impl LlmSdk {
-    pub fn new(token: String) -> Self {
+    pub fn new(base_url: impl Into<String>, token: impl Into<String>) -> Self {
         Self {
-            token,
+            base_url: base_url.into(),
+            token: token.into(),
             client: Client::new(),
         }
     }
@@ -78,7 +80,7 @@ impl LlmSdk {
     }
 
     fn prepare_request(&self, req: impl IntoRequest) -> RequestBuilder {
-        let req = req.into_request(self.client.clone());
+        let req = req.into_request(&self.base_url, self.client.clone());
         let req = if self.token.is_empty() {
             req
         } else {
@@ -116,4 +118,12 @@ impl<T: JsonSchema> ToSchema for T {
 #[ctor::ctor]
 fn init() {
     tracing_subscriber::fmt::init();
+}
+
+#[cfg(test)]
+lazy_static::lazy_static! {
+    static ref SDK: LlmSdk = LlmSdk::new(
+        "https://api.openai.com/v1",
+        std::env::var("OPENAI_API_KEY").unwrap(),
+    );
 }

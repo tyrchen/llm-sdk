@@ -107,10 +107,10 @@ impl WhisperRequest {
 }
 
 impl IntoRequest for WhisperRequest {
-    fn into_request(self, client: Client) -> RequestBuilder {
+    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
         let url = match self.request_type {
-            WhisperRequestType::Transcription => "https://api.openai.com/v1/audio/transcriptions",
-            WhisperRequestType::Translation => "https://api.openai.com/v1/audio/translations",
+            WhisperRequestType::Transcription => format!("{}/audio/transcriptions", base_url),
+            WhisperRequestType::Translation => format!("{}/audio/translations", base_url),
         };
         client.post(url).multipart(self.into_form())
     }
@@ -118,61 +118,55 @@ impl IntoRequest for WhisperRequest {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use crate::LlmSdk;
-
     use super::*;
+    use crate::SDK;
     use anyhow::Result;
+    use std::fs;
 
     #[tokio::test]
     async fn transcription_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let data = fs::read("fixtures/speech.mp3")?;
         let req = WhisperRequest::transcription(data);
-        let res = sdk.whisper(req).await?;
+        let res = SDK.whisper(req).await?;
         assert_eq!(res.text, "The quick brown fox jumped over the lazy dog.");
         Ok(())
     }
 
     #[tokio::test]
     async fn transcription_with_response_format_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let data = fs::read("fixtures/speech.mp3")?;
         let req = WhisperRequestBuilder::default()
             .file(data)
             .response_format(WhisperResponseFormat::Text)
             .request_type(WhisperRequestType::Transcription)
             .build()?;
-        let res = sdk.whisper(req).await?;
+        let res = SDK.whisper(req).await?;
         assert_eq!(res.text, "The quick brown fox jumped over the lazy dog.\n");
         Ok(())
     }
 
     #[tokio::test]
     async fn transcription_with_vtt_response_format_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let data = fs::read("fixtures/speech.mp3")?;
         let req = WhisperRequestBuilder::default()
             .file(data)
             .response_format(WhisperResponseFormat::Vtt)
             .request_type(WhisperRequestType::Transcription)
             .build()?;
-        let res = sdk.whisper(req).await?;
+        let res = SDK.whisper(req).await?;
         assert_eq!(res.text, "WEBVTT\n\n00:00:00.000 --> 00:00:02.800\nThe quick brown fox jumped over the lazy dog.\n\n");
         Ok(())
     }
 
     #[tokio::test]
     async fn translate_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let data = fs::read("fixtures/chinese.mp3")?;
         let req = WhisperRequestBuilder::default()
             .file(data)
             .response_format(WhisperResponseFormat::Srt)
             .request_type(WhisperRequestType::Translation)
             .build()?;
-        let res = sdk.whisper(req).await?;
+        let res = SDK.whisper(req).await?;
         assert_eq!(res.text, "1\n00:00:00,000 --> 00:00:03,000\nThe red scarf hangs on the chest, the motherland is always in my heart.\n\n\n");
         Ok(())
     }

@@ -254,10 +254,9 @@ pub enum FinishReason {
 }
 
 impl IntoRequest for ChatCompletionRequest {
-    fn into_request(self, client: Client) -> RequestBuilder {
-        client
-            .post("https://api.openai.com/v1/chat/completions")
-            .json(&self)
+    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+        let url = format!("{}/chat/completions", base_url);
+        client.post(url).json(&self)
     }
 }
 
@@ -305,7 +304,7 @@ impl Tool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{LlmSdk, ToSchema};
+    use crate::{ToSchema, SDK};
     use anyhow::Result;
     use schemars::JsonSchema;
 
@@ -441,9 +440,8 @@ mod tests {
 
     #[tokio::test]
     async fn simple_chat_completion_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let req = get_simple_completion_request();
-        let res = sdk.chat_completion(req).await?;
+        let res = SDK.chat_completion(req).await?;
         assert_eq!(res.model, ChatCompleteModel::Gpt3Turbo);
         assert_eq!(res.object, "chat.completion");
         assert_eq!(res.choices.len(), 1);
@@ -456,9 +454,8 @@ mod tests {
 
     #[tokio::test]
     async fn chat_completion_with_tools_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let req = get_tool_completion_request();
-        let res = sdk.chat_completion(req).await?;
+        let res = SDK.chat_completion(req).await?;
         assert_eq!(res.model, ChatCompleteModel::Gpt3Turbo);
         assert_eq!(res.object, "chat.completion");
         assert_eq!(res.choices.len(), 1);

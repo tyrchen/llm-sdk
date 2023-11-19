@@ -56,10 +56,9 @@ pub enum SpeechResponseFormat {
 }
 
 impl IntoRequest for SpeechRequest {
-    fn into_request(self, client: Client) -> RequestBuilder {
-        client
-            .post("https://api.openai.com/v1/audio/speech")
-            .json(&self)
+    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+        let url = format!("{}/audio/speech", base_url);
+        client.post(url).json(&self)
     }
 }
 
@@ -74,18 +73,15 @@ impl SpeechRequest {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use crate::LlmSdk;
-
     use super::*;
+    use crate::SDK;
     use anyhow::Result;
+    use std::fs;
 
     #[tokio::test]
     async fn speech_should_work() -> Result<()> {
-        let sdk = LlmSdk::new(std::env::var("OPENAI_API_KEY")?);
         let req = SpeechRequest::new("The quick brown fox jumped over the lazy dog.");
-        let res = sdk.speech(req).await?;
+        let res = SDK.speech(req).await?;
 
         fs::write("/tmp/llm-sdk/test.mp3", res)?;
 
