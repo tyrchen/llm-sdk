@@ -1,6 +1,6 @@
 use crate::IntoRequest;
 use derive_builder::Builder;
-use reqwest::{Client, RequestBuilder};
+use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Builder)]
@@ -97,7 +97,7 @@ pub struct ImageObject {
 }
 
 impl IntoRequest for CreateImageRequest {
-    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+    fn into_request(self, base_url: &str, client: ClientWithMiddleware) -> RequestBuilder {
         let url = format!("{}/images/generations", base_url);
         client.post(url).json(&self)
     }

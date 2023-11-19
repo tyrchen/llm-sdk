@@ -1,6 +1,6 @@
 use crate::IntoRequest;
 use derive_builder::Builder;
-use reqwest::{Client, RequestBuilder};
+use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Builder)]
@@ -56,7 +56,7 @@ pub enum SpeechResponseFormat {
 }
 
 impl IntoRequest for SpeechRequest {
-    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+    fn into_request(self, base_url: &str, client: ClientWithMiddleware) -> RequestBuilder {
         let url = format!("{}/audio/speech", base_url);
         client.post(url).json(&self)
     }

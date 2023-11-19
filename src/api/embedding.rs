@@ -1,6 +1,6 @@
 use crate::IntoRequest;
 use derive_builder::Builder;
-use reqwest::{Client, RequestBuilder};
+use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Builder)]
@@ -69,7 +69,7 @@ pub struct EmbeddingData {
 }
 
 impl IntoRequest for EmbeddingRequest {
-    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+    fn into_request(self, base_url: &str, client: ClientWithMiddleware) -> RequestBuilder {
         let url = format!("{}/embeddings", base_url);
         client.post(url).json(&self)
     }

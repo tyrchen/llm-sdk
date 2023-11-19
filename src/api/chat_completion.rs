@@ -1,6 +1,6 @@
 use crate::{IntoRequest, ToSchema};
 use derive_builder::Builder;
-use reqwest::{Client, RequestBuilder};
+use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Builder)]
@@ -254,7 +254,7 @@ pub enum FinishReason {
 }
 
 impl IntoRequest for ChatCompletionRequest {
-    fn into_request(self, base_url: &str, client: Client) -> RequestBuilder {
+    fn into_request(self, base_url: &str, client: ClientWithMiddleware) -> RequestBuilder {
         let url = format!("{}/chat/completions", base_url);
         client.post(url).json(&self)
     }
