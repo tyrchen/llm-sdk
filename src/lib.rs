@@ -71,6 +71,12 @@ impl LlmSdk {
         Ok(ret)
     }
 
+    pub async fn embedding(&self, req: EmbeddingRequest) -> Result<EmbeddingResponse> {
+        let req = self.prepare_request(req);
+        let res = req.send_and_log().await?;
+        Ok(res.json().await?)
+    }
+
     fn prepare_request(&self, req: impl IntoRequest) -> RequestBuilder {
         let req = req.into_request(self.client.clone());
         let req = if self.token.is_empty() {
