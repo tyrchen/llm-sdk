@@ -1,7 +1,17 @@
 [package]
 name = "llm-sdk"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+license = "MIT"
+documentation = "https://docs.rs/llm-sdk"
+repository = "https://github.com/tyrchen/llm-sdk"
+homepage = "https://github.com/tyrchen/llm-sdk"
+description = """
+A simple SDK for OpenAI compatible API.
+"""
+readme = "README.md"
+categories = ["API bindings"]
+keywords = ["openai", "llm", "sdk"]
 
 [dependencies]
 anyhow = "1.0.75"

@@ -260,6 +260,26 @@ impl IntoRequest for ChatCompletionRequest {
     }
 }
 
+impl ChatCompletionRequest {
+    pub fn new(messages: impl Into<Vec<ChatCompletionMessage>>) -> Self {
+        ChatCompletionRequestBuilder::default()
+            .messages(messages)
+            .build()
+            .unwrap()
+    }
+
+    pub fn new_with_tools(
+        messages: impl Into<Vec<ChatCompletionMessage>>,
+        tools: impl Into<Vec<Tool>>,
+    ) -> Self {
+        ChatCompletionRequestBuilder::default()
+            .messages(messages)
+            .tools(tools)
+            .build()
+            .unwrap()
+    }
+}
+
 impl ChatCompletionMessage {
     pub fn new_system(content: impl Into<String>, name: &str) -> ChatCompletionMessage {
         ChatCompletionMessage::System(SystemMessage {
@@ -477,10 +497,7 @@ mod tests {
             ChatCompletionMessage::new_system("I can answer any question you ask me.", ""),
             ChatCompletionMessage::new_user("What is human life expectancy in the world?", "user1"),
         ];
-        ChatCompletionRequestBuilder::default()
-            .messages(messages)
-            .build()
-            .unwrap()
+        ChatCompletionRequest::new(messages)
     }
 
     fn get_tool_completion_request() -> ChatCompletionRequest {
@@ -498,10 +515,6 @@ mod tests {
                 "Explain the meaning of the given mood.",
             ),
         ];
-        ChatCompletionRequestBuilder::default()
-            .messages(messages)
-            .tools(tools)
-            .build()
-            .unwrap()
+        ChatCompletionRequest::new_with_tools(messages, tools)
     }
 }
