@@ -118,7 +118,6 @@ mod tests {
     use crate::SDK;
     use anyhow::Result;
     use serde_json::json;
-    use std::fs;
 
     #[test]
     fn create_image_request_should_serialize() -> Result<()> {
@@ -163,13 +162,7 @@ mod tests {
         assert!(image.url.is_some());
         assert!(image.b64_json.is_none());
         println!("image: {:?}", image);
-        fs::write(
-            "/tmp/llm-sdk/caterpillar.png",
-            reqwest::get(image.url.as_ref().unwrap())
-                .await?
-                .bytes()
-                .await?,
-        )?;
+
         Ok(())
     }
 }

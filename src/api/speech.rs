@@ -76,14 +76,11 @@ mod tests {
     use super::*;
     use crate::SDK;
     use anyhow::Result;
-    use std::fs;
 
     #[tokio::test]
     async fn speech_should_work() -> Result<()> {
         let req = SpeechRequest::new("The quick brown fox jumped over the lazy dog.");
-        let res = SDK.speech(req).await?;
-
-        fs::write("/tmp/llm-sdk/test.mp3", res)?;
+        let _res = SDK.speech(req).await.unwrap();
 
         Ok(())
     }
