@@ -17,6 +17,7 @@ use std::time::Duration;
 use tracing::error;
 
 const TIMEOUT: u64 = 30;
+const MAX_RETRIES: u32 = 3;
 
 #[derive(Debug, Clone, Builder)]
 pub struct LlmSdk {
@@ -46,7 +47,7 @@ impl LlmSdkBuilder {
     // Private helper method with access to the builder struct.
     fn default_client(&self) -> ClientWithMiddleware {
         let retry_policy = ExponentialBackoff::builder()
-            .build_with_max_retries(self.max_retries.unwrap_or_default());
+            .build_with_max_retries(self.max_retries.unwrap_or(MAX_RETRIES));
         let m = RetryTransientMiddleware::new_with_policy(retry_policy);
         ClientBuilder::new(reqwest::Client::new())
             // Trace HTTP requests. See the tracing crate to make use of these traces.
