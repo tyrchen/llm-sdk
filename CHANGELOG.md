@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 2024-01-20
+
+[389c3ea](389c3ea46ef01cd3c825ea17692b218244a2f429)...[d92d00e](d92d00eb3254cace121385818b2a145784adeb43)
+
+### Features
+
+- All passing model ([77d011a](77d011aa51463135d1ef7f5a9edc2c54a3efe114) - 2024-01-20 by Tyr Chen)
+
+### Miscellaneous Tasks
+
+- No need to use async_trait for internal traits ([d92d00e](d92d00eb3254cace121385818b2a145784adeb43) - 2024-01-20 by Tyr Chen)
+
 ## [0.4.1] - 2023-12-17
 
 [7a94ac1](7a94ac1458791329ecb502d0aa6b821e6a46f905)...[389c3ea](389c3ea46ef01cd3c825ea17692b218244a2f429)
