@@ -4,7 +4,6 @@ mod middleware;
 pub use api::*;
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use bytes::Bytes;
 use derive_builder::Builder;
 use middleware::RetryMiddleware;
@@ -122,12 +121,10 @@ impl LlmSdk {
     }
 }
 
-#[async_trait]
 trait SendAndLog {
     async fn send_and_log(self) -> Result<Response>;
 }
 
-#[async_trait]
 impl SendAndLog for RequestBuilder {
     async fn send_and_log(self) -> Result<Response> {
         let res = self.send().await?;

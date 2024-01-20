@@ -1,6 +1,6 @@
 [package]
 name = "llm-sdk"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 license = "MIT"
 documentation = "https://docs.rs/llm-sdk"
