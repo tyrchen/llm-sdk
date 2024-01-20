@@ -14,11 +14,11 @@ categories = ["API bindings"]
 keywords = ["openai", "llm", "sdk"]
 
 [dependencies]
-anyhow = "1.0.75"
-async-trait = "0.1.74"
+anyhow = "1.0.76"
+async-trait = "0.1.75"
 bytes = "1.5.0"
 derive_builder = "0.12.0"
-reqwest = { version = "0.11.22", default-features = false, features = [
+reqwest = { version = "0.11.23", default-features = false, features = [
   "gzip",
   "json",
   "multipart",
@@ -28,14 +28,14 @@ reqwest-middleware = "0.2.4"
 reqwest-retry = "0.3.0"
 reqwest-tracing = "0.4.6"
 schemars = "0.8.16"
-serde = { version = "1.0.192", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
 strum = { version = "0.25.0", features = ["derive"] }
 task-local-extensions = "0.1.4"
 tracing = "0.1.40"
 
 [dev-dependencies]
-ctor = "0.2.5"
+ctor = "0.2.6"
 lazy_static = "1.4.0"
-tokio = { version = "1.34.0", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "1.35.1", features = ["rt", "rt-multi-thread", "macros"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

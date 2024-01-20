@@ -2,6 +2,7 @@ use crate::{IntoRequest, ToSchema};
 use derive_builder::Builder;
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
+use strum::{Display, EnumIter, EnumMessage, EnumString, EnumVariantNames};
 
 #[derive(Debug, Clone, Serialize, Builder)]
 pub struct ChatCompletionRequest {
@@ -71,7 +72,9 @@ pub struct ChatCompletionRequest {
     user: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[derive(
+    Debug, Clone, Default, PartialEq, Eq, Serialize, EnumString, Display, EnumVariantNames,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolChoice {
     #[default]
@@ -106,7 +109,9 @@ pub struct ChatResponseFormatObject {
     r#type: ChatResponseFormat,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, EnumString, Display, EnumVariantNames,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ChatResponseFormat {
     Text,
@@ -114,7 +119,7 @@ pub enum ChatResponseFormat {
     Json,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Display, EnumVariantNames, EnumMessage)]
 #[serde(rename_all = "snake_case", tag = "role")]
 pub enum ChatCompletionMessage {
     /// A message from a system.
@@ -127,17 +132,39 @@ pub enum ChatCompletionMessage {
     Tool(ToolMessage),
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    EnumString,
+    EnumIter,
+    Display,
+    EnumVariantNames,
+    EnumMessage,
+)]
 
 pub enum ChatCompleteModel {
+    /// The default model. Currently, this is the gpt-3.5-turbo-1106 model.
     #[default]
     #[serde(rename = "gpt-3.5-turbo-1106")]
+    #[strum(serialize = "gpt-3.5-turbo")]
     Gpt3Turbo,
+    /// GPT-3.5 turbo model with instruct capability.
     #[serde(rename = "gpt-3.5-turbo-instruct")]
+    #[strum(serialize = "gpt-3.5-turbo-instruct")]
     Gpt3TurboInstruct,
+    /// The latest GPT4 model. Currently, this is the gpt-4-1106-preview model.
     #[serde(rename = "gpt-4-1106-preview")]
+    #[strum(serialize = "gpt-4-turbo")]
     Gpt4Turbo,
+    /// The latest GPT4 model with vision capability. Currently, this is the gpt-4-1106-vision-preview model.
     #[serde(rename = "gpt-4-1106-vision-preview")]
+    #[strum(serialize = "gpt-4-turbo-vision")]
     Gpt4TurboVision,
 }
 
@@ -198,7 +225,19 @@ pub struct FunctionCall {
     pub arguments: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Default,
+    Serialize,
+    Deserialize,
+    EnumString,
+    Display,
+    EnumVariantNames,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolType {
     #[default]
@@ -243,7 +282,9 @@ pub struct ChatCompleteUsage {
     pub total_tokens: usize,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, EnumString, Display, EnumVariantNames,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum FinishReason {
     #[default]
@@ -261,18 +302,21 @@ impl IntoRequest for ChatCompletionRequest {
 }
 
 impl ChatCompletionRequest {
-    pub fn new(messages: impl Into<Vec<ChatCompletionMessage>>) -> Self {
+    pub fn new(model: ChatCompleteModel, messages: impl Into<Vec<ChatCompletionMessage>>) -> Self {
         ChatCompletionRequestBuilder::default()
+            .model(model)
             .messages(messages)
             .build()
             .unwrap()
     }
 
     pub fn new_with_tools(
+        model: ChatCompleteModel,
         messages: impl Into<Vec<ChatCompletionMessage>>,
         tools: impl Into<Vec<Tool>>,
     ) -> Self {
         ChatCompletionRequestBuilder::default()
+            .model(model)
             .messages(messages)
             .tools(tools)
             .build()
@@ -497,7 +541,7 @@ mod tests {
             ChatCompletionMessage::new_system("I can answer any question you ask me.", ""),
             ChatCompletionMessage::new_user("What is human life expectancy in the world?", "user1"),
         ];
-        ChatCompletionRequest::new(messages)
+        ChatCompletionRequest::new(ChatCompleteModel::Gpt3Turbo, messages)
     }
 
     fn get_tool_completion_request() -> ChatCompletionRequest {
@@ -515,6 +559,6 @@ mod tests {
                 "Explain the meaning of the given mood.",
             ),
         ];
-        ChatCompletionRequest::new_with_tools(messages, tools)
+        ChatCompletionRequest::new_with_tools(ChatCompleteModel::Gpt3Turbo, messages, tools)
     }
 }

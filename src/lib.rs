@@ -16,7 +16,7 @@ use schemars::{schema_for, JsonSchema};
 use std::time::Duration;
 use tracing::error;
 
-const TIMEOUT: u64 = 30;
+const TIMEOUT: u64 = 60;
 const MAX_RETRIES: u32 = 3;
 
 #[derive(Debug, Clone, Builder)]
